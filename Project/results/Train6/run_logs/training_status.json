@@ -1,0 +1,29 @@
+{
+    "BreakOutGameAgent": {
+        "checkpoints": [
+            {
+                "steps": 363253,
+                "file_path": "results\\Train6\\BreakOutGameAgent\\BreakOutGameAgent-363253.onnx",
+                "reward": 17.0,
+                "creation_time": 1727981658.3530574,
+                "auxillary_file_paths": [
+                    "results\\Train6\\BreakOutGameAgent\\BreakOutGameAgent-363253.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 363253,
+            "file_path": "results\\Train6\\BreakOutGameAgent.onnx",
+            "reward": 17.0,
+            "creation_time": 1727981658.3530574,
+            "auxillary_file_paths": [
+                "results\\Train6\\BreakOutGameAgent\\BreakOutGameAgent-363253.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.0.0",
+        "torch_version": "2.4.1+cpu"
+    }
+}

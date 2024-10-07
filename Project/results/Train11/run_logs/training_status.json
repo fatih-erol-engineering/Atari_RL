@@ -1,0 +1,38 @@
+{
+    "BreakOutGameAgent": {
+        "checkpoints": [
+            {
+                "steps": 499999,
+                "file_path": "results\\Train11\\BreakOutGameAgent\\BreakOutGameAgent-499999.onnx",
+                "reward": 29.588652482269502,
+                "creation_time": 1727985029.8091848,
+                "auxillary_file_paths": [
+                    "results\\Train11\\BreakOutGameAgent\\BreakOutGameAgent-499999.pt"
+                ]
+            },
+            {
+                "steps": 500003,
+                "file_path": "results\\Train11\\BreakOutGameAgent\\BreakOutGameAgent-500003.onnx",
+                "reward": 31.929328621908127,
+                "creation_time": 1727985029.8399193,
+                "auxillary_file_paths": [
+                    "results\\Train11\\BreakOutGameAgent\\BreakOutGameAgent-500003.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 500003,
+            "file_path": "results\\Train11\\BreakOutGameAgent.onnx",
+            "reward": 31.929328621908127,
+            "creation_time": 1727985029.8399193,
+            "auxillary_file_paths": [
+                "results\\Train11\\BreakOutGameAgent\\BreakOutGameAgent-500003.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.0.0",
+        "torch_version": "2.4.1+cpu"
+    }
+}

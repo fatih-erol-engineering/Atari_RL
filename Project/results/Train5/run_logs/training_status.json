@@ -1,0 +1,47 @@
+{
+    "BreakOutGameAgent": {
+        "checkpoints": [
+            {
+                "steps": 499994,
+                "file_path": "results\\Train5\\BreakOutGameAgent\\BreakOutGameAgent-499994.onnx",
+                "reward": 29.5,
+                "creation_time": 1727967523.495445,
+                "auxillary_file_paths": [
+                    "results\\Train5\\BreakOutGameAgent\\BreakOutGameAgent-499994.pt"
+                ]
+            },
+            {
+                "steps": 999979,
+                "file_path": "results\\Train5\\BreakOutGameAgent\\BreakOutGameAgent-999979.onnx",
+                "reward": 20.25,
+                "creation_time": 1727968799.7157474,
+                "auxillary_file_paths": [
+                    "results\\Train5\\BreakOutGameAgent\\BreakOutGameAgent-999979.pt"
+                ]
+            },
+            {
+                "steps": 1000016,
+                "file_path": "results\\Train5\\BreakOutGameAgent\\BreakOutGameAgent-1000016.onnx",
+                "reward": 24.8,
+                "creation_time": 1727968799.748634,
+                "auxillary_file_paths": [
+                    "results\\Train5\\BreakOutGameAgent\\BreakOutGameAgent-1000016.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1000016,
+            "file_path": "results\\Train5\\BreakOutGameAgent.onnx",
+            "reward": 24.8,
+            "creation_time": 1727968799.748634,
+            "auxillary_file_paths": [
+                "results\\Train5\\BreakOutGameAgent\\BreakOutGameAgent-1000016.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.0.0",
+        "torch_version": "2.4.1+cpu"
+    }
+}
