@@ -32,6 +32,8 @@ public class BreakOutGame : MonoBehaviour
     public TextMeshProUGUI scoreTMP;
     public TextMeshProUGUI gameStatusTMP;
 
+    [Header("Time Info")]
+    public float timeSec = 0f;
 
     private void Start()
     {
@@ -45,13 +47,14 @@ public class BreakOutGame : MonoBehaviour
             MovePaddle(selectedAction);
             MoveBall();
             UpdateTMPs();
+            timeSec += Time.fixedDeltaTime;
         }
     }
     public void MoveBall()
     {
         float velX = ballVelocity*Mathf.Sin(Mathf.Deg2Rad*ballAngle_deg);
         float velY = ballVelocity * Mathf.Cos(Mathf.Deg2Rad * ballAngle_deg);
-        ball.transform.Translate(velX * Time.deltaTime, velY * Time.deltaTime, 0f);
+        ball.transform.Translate(velX * Time.fixedDeltaTime, velY * Time.fixedDeltaTime, 0f);
 
         // Check Collision with Walls
         float ballWidth = ball.transform.GetComponent<SpriteRenderer>().sprite.texture.width;
@@ -123,13 +126,13 @@ public class BreakOutGame : MonoBehaviour
         if (isAtBottomWall)
         {
             gameStatus = GameStatus.Lose;
-            gameArea.transform.GetComponent<SpriteRenderer>().color = Color.red;
+            //gameArea.transform.GetComponent<SpriteRenderer>().color = Color.red;
         }
 
         if(isAllNull)
         {
             gameStatus = GameStatus.Win;
-            gameArea.transform.GetComponent<SpriteRenderer>().color = Color.green;
+            //gameArea.transform.GetComponent<SpriteRenderer>().color = Color.green;
         }
     }
     public void Reset()
@@ -137,6 +140,7 @@ public class BreakOutGame : MonoBehaviour
         gameStatus = GameStatus.Continue;
         selectedAction = BreakOutGameActions.Stay;
         score = 0;
+        timeSec = 0f;
         StartBallRandomPosAndRot();
         CreateBricks();
     }
@@ -169,7 +173,7 @@ public class BreakOutGame : MonoBehaviour
                 }
                 else
                 {
-                    deltaMoveX = paddleVelocity*Time.deltaTime;                                    
+                    deltaMoveX = paddleVelocity*Time.fixedDeltaTime;                                    
                 }
                 break;
             case BreakOutGameActions.Left:
@@ -179,7 +183,7 @@ public class BreakOutGame : MonoBehaviour
                 }
                 else
                 {
-                    deltaMoveX = paddleVelocity * Time.deltaTime * (-1);
+                    deltaMoveX = paddleVelocity * Time.fixedDeltaTime * (-1);
                 }
 
                 break;

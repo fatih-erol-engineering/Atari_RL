@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2088096110297629613}
   - component: {fileID: 1668605082297761573}
   - component: {fileID: 2284430864534856372}
+  - component: {fileID: 3778652482549414288}
   m_Layer: 0
   m_Name: Game
   m_TagString: Brick
@@ -129,6 +130,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DecisionPeriod: 5
   TakeActionsBetweenDecisions: 1
+--- !u!114 &3778652482549414288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 939682014958531487}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132e1194facb64429b007ea1edf562d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderTexture: {fileID: 8400000, guid: e3512edb709ec5647b5fad5299e9e4d1, type: 2}
+  m_SensorName: RenderTextureSensor
+  m_Grayscale: 1
+  m_ObservationStacks: 4
+  m_Compression: 0
 --- !u!1 &3066192932318979441
 GameObject:
   m_ObjectHideFlags: 0
