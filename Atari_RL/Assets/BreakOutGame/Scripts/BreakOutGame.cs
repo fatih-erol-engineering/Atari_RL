@@ -16,7 +16,8 @@ public class BreakOutGame : MonoBehaviour
     public GameObject brickPrefab;
     public GameObject brickHolderGameObject;
     public float brickBorder;
-    private GameObject[] bricks;
+    public GameObject[] bricks;
+    
 
     [Header("Action")]
     public BreakOutGameActions selectedAction = BreakOutGameActions.Stay;
@@ -37,6 +38,10 @@ public class BreakOutGame : MonoBehaviour
 
     private void Start()
     {
+        Time.timeScale = 4f;
+
+        // FPS'yi 30'da sabitle
+        //Application.targetFrameRate = 15;
         Reset();        
     }
     void FixedUpdate()
