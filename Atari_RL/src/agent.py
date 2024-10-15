@@ -1,135 +1,195 @@
+# Source: https://www.youtube.com/watch?v=tsy1mgB7hB0
+
+import os
 from mlagents_envs.environment import UnityEnvironment
 from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper
-import numpy as np
-from collections import deque
-import random
+from torch import nn
 import torch
-from model import Linear_QNet, QTrainer
-from helper import plot
+from torch.utils.tensorboard import SummaryWriter
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
-actions = [0,1,2]
-class Agent:
-    
-    def __init__(self):
-        self.n_games = 0
-        self.epsilon = 0.1 # randomness
-        self.gamma = 0.9 # discount rate
-        self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = Linear_QNet(20,256,3)
-        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.observation = np.array([])
-    def get_state(self,game):
-        if  self.observation.size == 0:
-            self.observation = game.reset()[0]
-            
-        time_sec = self.observation[0]
-        game_score = self.observation[1]
-        ball_position = self.observation[2:5]
-        paddle_position = self.observation[5:8]
-        ball_velocity = self.observation[8]
-        ball_angle_rad = self.observation[9]
-        isBrickHitted = self.observation[10:]
-        state = np.array([float(ball_position[0]),
-                float(ball_position[1]), 
-                float(ball_position[2]), 
-                float(paddle_position[0]), 
-                float(paddle_position[1]), 
-                float(paddle_position[2]), 
-                float(ball_velocity/10), 
-                float(ball_angle_rad), 
-                float(isBrickHitted[0]),
-                float(isBrickHitted[1]),
-                float(isBrickHitted[2]),
-                float(isBrickHitted[3]),
-                float(isBrickHitted[4]),
-                float(isBrickHitted[5]),
-                float(isBrickHitted[6]),
-                float(isBrickHitted[7]),
-                float(isBrickHitted[8]),
-                float(isBrickHitted[9]),
-                float(isBrickHitted[10]),
-                float(isBrickHitted[11])],dtype = np.float32)
-                # MAL GIBI YAPTIM
-        return state
+from collections import deque
+import itertools
+import numpy as np
+import random
+import msgpack
+from msgpack_numpy import patch as msgpack_numpy_patch
+
+msgpack_numpy_patch()
+GAMMA=0.99
+BATCH_SIZE=32
+BUFFER_SIZE=50000
+MIN_REPLAY_SIZE=1000
+EPSILON_START=1.0
+EPSILON_END=0.02
+EPSILON_DECAY=10000
+TARGET_UPDATE_FREQ = 1000
+SAVE_PATH = './results/atari_model.pack'
+SAVE_INTERVAL = 10_000
+LOG_DIR = './logs/atari_vanilla'
+LOG_INTERVAL = 1000
+
+class Network(nn.Module):
+    def __init__(self, env):
+        super().__init__()
+
+        in_features = int(np.prod(env.observation_space.shape))
+
+        self.net = nn.Sequential(
+            nn.Linear(in_features, 128),
+            nn.Tanh(),
+            nn.Linear(128, 256),
+            nn.Tanh(),
+            nn.Linear(256, env.action_space.n)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+    def act(self, obs):
+        obs_t = torch.as_tensor(obs, dtype=torch.float32)
+        q_values = self(obs_t.unsqueeze(0))
+        max_q_index = torch.argmax(q_values, dim=1)[0]
+        action = max_q_index.detach().item()
+
+        return action
+    def load(self):
+        pass
+    def save(self,save_path):
+        params = {k: t.detach().cpu().numpy() for k,t in self.state_dict().items()}
+        params_data = msgpack.dumps(params)
         
-    
-    def remember(self,state,action,reward,next_state,done):
-        self.memory.append([state,action,reward,next_state,done]) #popleft if MAX_MEMORY is reached    
+        os.makedirs(os.path.dirname(save_path), exist_ok = True)
+        with open(save_path, 'wb') as f:
+            f.write(params_data)
         
-    def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
-        else:
-            mini_sample = self.memory            
-            
-        states,actions,rewards,next_states,dones = zip(*mini_sample)        
-        self.trainer.train_step(states,actions,rewards,next_states,dones)        
+    def load(self,load_path):
+        if not os.path_exists(load_path):
+            raise FileNotFoundError(load_path)
+        with open(load_path,'rb') as f:
+            params_numpy = msgpack.loads(f.read())
+        params = {k: torch.as_tensor(v) for k,v in params_numpy.items()}
+        self.load_state_dict(params)
         
-    def train_short_memory(self,state,action,reward,next_state,done):
-        self.trainer.train_step(state,action,reward,next_state,done)
-    
-    def get_action(self,state):
-        self.epsilon = 80 - self.n_games
-        final_move = [0,0,0]        
-        if random.randint(0,200) < self.epsilon:
-            move = random.randint(0,2)
-            final_move[move] = 1
-        else:
-            state0 = torch.tensor(state, dtype = torch.float)
-            prediction = self.model(state0)   
-            move = torch.argmax(prediction).item()
-            final_move[move] = 1
-        return final_move
-    
-    
-def train():
-    plot_scores = []
-    plot_mean_scores = []
-    total_score = 0
-    record = 0
-    agent = Agent()
-    game = UnityToGymWrapper(UnityEnvironment(),allow_multiple_obs=True)
-    
-    while True:
-        state_old = agent.get_state(game)
+env = UnityToGymWrapper(UnityEnvironment(),allow_multiple_obs=False)
+
+replay_buffer = deque(maxlen=BUFFER_SIZE)
+rew_buffer = deque([0.0], maxlen=100)
+
+episode_reward = 0
+episode_count = 0
+summary_writer = SummaryWriter(LOG_DIR)
+
+online_net = Network(env)
+target_net = Network(env)
+
+target_net.load_state_dict(online_net.state_dict())
+
+optimizer = torch.optim.Adam(online_net.parameters(), lr=5e-4)
+
+# Initialize replay buffer
+obs = env.reset()
+for _ in range(MIN_REPLAY_SIZE):
+    action = env.action_space.sample()
+
+    new_obs, rew, done, _ = env.step(action)
+    transition = (obs, action, rew, done, new_obs)
+    replay_buffer.append(transition)
+    obs = new_obs
+
+    if done:
+        obs = env.reset()
+
+
+# Main Training Loop
+obs = env.reset()
+for step in itertools.count():
+    epsilon = np.interp(step, [0, EPSILON_DECAY], [EPSILON_START, EPSILON_END])
+
+    rnd_sample = random.random()
+    if rnd_sample <= epsilon:
+        action = env.action_space.sample()
+    else:
+        action = online_net.act(obs)
+
+    new_obs, rew, done, _ = env.step(action)
+    transition = (obs, action, rew, done, new_obs)
+    replay_buffer.append(transition)
+    obs = new_obs
+
+    episode_reward += rew
+
+    if done:
+        obs = env.reset()
+
+        rew_buffer.append(episode_reward)
+        episode_reward = 0
+
+    # If we solved it lets just watch it play, put in last
+    if len(rew_buffer) >= 100:
+        if np.mean(rew_buffer) >= 195:
+            while True:
+                action = online_net.act(obs)
+
+                obs, _, done, _ = env.step(action)
+                env.render()
+                if done: 
+                    env.reset()
+
+    transitions = random.sample(replay_buffer, BATCH_SIZE)
+
+    obses = np.asarray([t[0] for t in transitions])
+    actions = np.asarray([t[1] for t in transitions])
+    rews = np.asarray([t[2] for t in transitions])
+    dones = np.asarray([t[3] for t in transitions])
+    new_obses = np.asarray([t[4] for t in transitions])
+
+    obses_t = torch.as_tensor(obses, dtype=torch.float32)
+    actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1)
+    rews_t = torch.as_tensor(rews, dtype=torch.float32).unsqueeze(-1)
+    dones_t = torch.as_tensor(dones, dtype=torch.float32).unsqueeze(-1)
+    new_obses_t = torch.as_tensor(new_obses, dtype=torch.float32)
+
+    # Compute Targets
+    # targets = r + gamma * target q vals * (1 - dones)
+    target_q_values = target_net(new_obses_t)
+    max_target_q_values = target_q_values.max(dim=1, keepdim=True)[0]
+
+    targets = rews_t + GAMMA * (1 - dones_t) * max_target_q_values
+
+    # Compute Loss
+    q_values = online_net(obses_t)
+    action_q_values = torch.gather(input=q_values, dim=1, index=actions_t)
+
+    loss = nn.functional.smooth_l1_loss(action_q_values, targets)
+
+    # Gradient Descent
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    episode_count += 1
+    # Update Target Net
+    if step % TARGET_UPDATE_FREQ == 0:
+        target_net.load_state_dict(online_net.state_dict())
+
+    # Logging
+    if step % LOG_INTERVAL == 0:
+        print()
+        print('Step:', step)
+        print('Avg Rew:', np.mean(rew_buffer))
+        print('Episodes:', episode_count)
         
-        final_move = agent.get_action(state_old)
-        
-        observation, reward, terminated, info = game.step(np.argmax(final_move).item()) 
-        agent.observation = observation[0]
-        done = terminated
-        score = agent.observation[1]
-        
-        state_new = agent.get_state(game)
-        
-        agent.train_short_memory(state_old,final_move,reward,state_new,done)
-        
-        agent.remember(state_old, final_move, reward, state_new, done)
-        
-        if done:
-            game.reset()
-            agent.n_games += 1
-            agent.train_long_memory()
-            
-            if  score > record:
-                if not plot_scores:
-                    pass
-                else:
-                    record = max(plot_scores)
-                agent.model.save()
-            print('Game: ', agent.n_games, 'Score: ,', score, 'Record: ', record)
-            
-            # plot_scores.append(score)
-            # total_score += score 
-            # mean_score = total_score / agent.n_games
-            # plot_mean_scores.append(mean_score)
-            # plot(plot_scores,plot_mean_scores)
-            
-        
-    
-    
-if __name__ =="__main__":
-    train()
+        # summary_writer.add_scalar('AvgRew',rew_buffer, global_step=step)
+        # summary_writer.add_scalar('Episodes', episode_count, global_step=step)
+    if step % SAVE_INTERVAL == 0 and step != 0:
+        print('Saving...')
+        online_net.save(SAVE_PATH)
+
+
+
+
+
+
+
+
+
+
