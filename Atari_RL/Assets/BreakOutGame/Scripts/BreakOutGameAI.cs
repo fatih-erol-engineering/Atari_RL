@@ -13,31 +13,31 @@ public class BreakOutGameAI : Agent
     public float[] isBrickHitted;
     public override void OnEpisodeBegin()
     {
-        
+        //Time.timeScale = 2f;
         prevScore = game.score;
         game.Reset();
     }
     public override void CollectObservations(VectorSensor sensor)
     {
-        sensor.AddObservation(game.timeSec);
-        sensor.AddObservation(game.score);
-        sensor.AddObservation(game.ball.transform.localPosition);
-        sensor.AddObservation(game.paddle.transform.localPosition);
-        sensor.AddObservation(game.ballVelocity);
-        sensor.AddObservation(game.ballAngle_deg*Mathf.Deg2Rad);
-        isBrickHitted = new float[game.numberOfBricks[0]* game.numberOfBricks[1]];
-        for (int i = 0; i < isBrickHitted.Length; i++)
-        {
-            if (game.bricks[i] == null)
-            {
-                isBrickHitted[i] = 1f;
-            }
-            else
-            {
-                isBrickHitted[i] = 0f;
-            }
-        }
-        sensor.AddObservation(isBrickHitted);
+        //sensor.AddObservation(game.timeSec);
+        //sensor.AddObservation(game.score);
+        //sensor.AddObservation(game.ball.transform.localPosition);
+        //sensor.AddObservation(game.paddle.transform.localPosition);
+        //sensor.AddObservation(game.ballVelocity);
+        //sensor.AddObservation(game.ballAngle_deg*Mathf.Deg2Rad);
+        //isBrickHitted = new float[game.numberOfBricks[0]* game.numberOfBricks[1]];
+        //for (int i = 0; i < isBrickHitted.Length; i++)
+        //{
+        //    if (game.bricks[i] == null)
+        //    {
+        //        isBrickHitted[i] = 1f;
+        //    }
+        //    else
+        //    {
+        //        isBrickHitted[i] = 0f;
+        //    }
+        //}
+        //sensor.AddObservation(isBrickHitted);
 
     }
     public override void OnActionReceived(ActionBuffers actions)
@@ -94,15 +94,15 @@ public class BreakOutGameAI : Agent
 
     void WaitTimeInference()
     {
-        //if (renderCamera != null && SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
-        //{
-        //    renderCamera.Render();
-        //}
+        if (renderCamera != null && SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
+        {
+            renderCamera.Render();
+        }
 
-        //if (Academy.Instance.IsCommunicatorOn)
-        //{
-        //    RequestDecision();
-        //}
+        if (Academy.Instance.IsCommunicatorOn)
+        {
+            RequestDecision();
+        }
     }
 
 }

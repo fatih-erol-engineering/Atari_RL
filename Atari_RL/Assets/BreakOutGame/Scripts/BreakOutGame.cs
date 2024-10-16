@@ -38,10 +38,6 @@ public class BreakOutGame : MonoBehaviour
 
     private void Start()
     {
-        Time.timeScale = 4f;
-
-        // FPS'yi 30'da sabitle
-        //Application.targetFrameRate = 15;
         Reset();        
     }
     void FixedUpdate()
